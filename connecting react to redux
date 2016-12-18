@@ -1,0 +1,89 @@
+React-redux
+    consists of
+
+    1) Provider - attaches app to store, wraps your app's top level component. store is not passed to child component App explicitly,
+    but App still gets it (React's "context" feature)
+
+    <Provider store={this.props.store}>
+        <App/>
+    </Provider>
+
+    2) Connect - creates container components for you while attaching parts of the store we want for our components, as props.
+    mapStateToProps : store parts we want to send as props
+    mapDispatchToProps: actions we want to pass in as props
+
+    export default connect(
+        mapStateToProps,
+        mapDispatchToProps
+    )(AuthorPage);
+
+Benefits of Connect
+    -you dont need to manually subscribe/unsubscribe to stores in your Components like Flux
+    -dont need to utilize lifecycle methods to subscribe to the store
+    -clearly declare what subset of state you want
+    -performance - wasteful rerenders eliminated because we only subscribe to what we need, and no more manually suppressing renders via shouldComponentUpdate
+
+using Connect
+    -connect is passed in functions, mapStateToProps, mapDispatchToProps
+    -mapStateToProps : defines what part of redux stores you want to subscribe to. the component will subscribe to redux store updates
+                        any time the redux store updates, mapStateToProps will be called.  this function call will return an object.
+                        each property on the object you define will become a property on your container component
+                        -this is where youd want to transform your state to suit the component.
+
+                        function mapStateToProps(state){
+                            return {
+                                appState: state
+                            };
+                        }
+
+                        -try to memoize (cache) for each mapstatetoprops call using the Reselect library
+
+    -mapDispatchToProps: exposes which actions we expose to our component as props
+                          -can manually wrap the wanted actions in mapDispatchToProps (This approach is good)
+
+                                function mapDispatchToProps(dispatch){
+                                    return {
+                                        loadCourses: () => {    // each of these is an action creator ; what you'd see in actions file in flux implementation.
+                                            dispatch(loadCourses());
+                                        },
+                                        createCourse: (course) => {
+                                            dispatch(createCourse(course));
+                                        },
+                                        updateCourse: (course) = {
+                                            dispatch(updateCourse(course));
+                                        }
+                                    }
+                                }
+
+                                // in component, these are available as  this.props.loadCourses(), this.props.createCourses(), this.props.update
+
+                        -if mapDispatchToProps is omitted, then
+                        this.props.dispatch function will be attached to your container component.
+                        so you can use it like this:
+
+                                // in component,
+
+                                this.props.dispatch(loadCourses());
+
+                                // youd need to import the actions in the component page (meaning the component knows about redux)
+
+
+                        -or use the convnience function bindActionCreators
+
+                                function mapDispatchToProps(dispatch){
+                                    return {
+                                        actions: bindActionCreators(actions,dispatch)
+                                    };
+                                }
+
+                                // available to component as   this.props.actions.loadCourses();
+
+A chat with Redux
+
+    React: Hey CourseAction, someone clicked this "save course" button
+    Action: Thanks React! I will dispatch an action so reducers that care can update state.
+    Reducer: Ah thanks action. I see you passed me the current state and the action to perform. I'll make a new copy of the state and return it
+    Store: Thanks for updating the state reducer. I'll make sure that all connectedd components are aware.
+    React-Redux: whoa, thanks for the new data Mr.Store. I'll now intelligently determine if I should tell React about this change so that it only has to bother with
+                updating the UI when necessary.
+    React: Ooh! shiny new data has been passed down via props from the store! i'll update the ui to reflect this
